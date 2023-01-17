@@ -9,14 +9,12 @@ public class Inputneuron {
     private double deltaInput;
 
     public Inputneuron(int hiddenAmount){
-        // NACHHER ÄNDERN; IN SOLL VON DATEI GELESEN WERDEN
-        setIn(Math.random());
         setHiddenAmount(hiddenAmount);
         initializeWeights();
     }
 
     public void initializeWeights(){
-        for(int i = 1; i<weight.length;i++){
+        for(int i = 0; i<weight.length;i++){
             weight[i] = Double.parseDouble(df.format(Math.random()));
         }
     }

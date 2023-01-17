@@ -27,6 +27,7 @@ public class Main {
                 //initTestInput();
                 initHidden();
                 //initTestHidden();
+                //printOutWeights();
                 forward();
                 boolean isDeltaZero = calculateDelta();
                 if (!isDeltaZero) {
@@ -41,12 +42,22 @@ public class Main {
                     hidden[k].setIn(0);
                 }
                 output.setIn(0);
+
             }
             if (amountErrors == 0) {
                 System.out.println("Dataset complete. Predicted without error.");
                 break;
             } else {
                 System.out.println(amountErrors + " errors in predicting datasets.");
+            }
+        }
+    }
+
+    private static void printOutWeights() {
+        for(int i = 0; i<input.length;i++){
+            System.out.println("Input " + i + " Gewichte: ");
+            for(int j = 0; j<input[i].getAmountWeights();j++) {
+                System.out.print(input[i].getWeight(j) + ", ");
             }
         }
     }
