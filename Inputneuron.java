@@ -4,7 +4,10 @@ public class Inputneuron {
 
     private static final DecimalFormat df = new DecimalFormat("#.00");
     private double in;
+    private double out;
     private double[] weight;
+    private double deltaInput;
+
     public Inputneuron(int hiddenAmount){
         // NACHHER ÄNDERN; IN SOLL VON DATEI GELESEN WERDEN
         setIn(Math.random());
@@ -34,4 +37,18 @@ public class Inputneuron {
     public double getIn(){
         return in;
     }
+    public void calculateDeltaInput(){
+
+    }
+    public double getDeltaInput(){
+        return deltaInput;
+    }
+    public int getAmountWeights(){
+        return weight.length;
+    }
+    public double calculateOut(){
+        out = Hiddenneuron.sig(in);
+        return out;
+    }
+
 }

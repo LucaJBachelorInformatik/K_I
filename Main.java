@@ -1,17 +1,115 @@
 public class Main {
 
-    private static final int HIDDEN_AMOUNT = 3;
+    private static final int HIDDEN_AMOUNT = 10;
     private static Inputneuron[] input = new Inputneuron[3];
     private static Hiddenneuron[] hidden = new Hiddenneuron[HIDDEN_AMOUNT];
     private static Outputneuron output = new Outputneuron();
-    public static void main(String[] args){
-        //initInput();
-        initTestInput();
-        //initHidden();
-        initTestHidden();
-        forward();
-        testOutput();
+    private static final int NUMBER_DATA_SETS = 5;
+    private static final int NUMBER_PARAMETERS = 2;
+    private static double[][] data = new double[NUMBER_DATA_SETS][NUMBER_PARAMETERS+1];
+    private static final int EPOCH = 200;
+    private static int currentDataSet;
+    private static double alpha = 0.01;
+    private static int amountErrors;
 
+    public static void main(String[] args){
+        for(int i = 0; i<EPOCH;i++) {
+            currentDataSet = 0;
+            amountErrors = 0;
+            for (int j = 0; j < NUMBER_DATA_SETS; j++) {
+                initDataSets();
+                //TestDataSets();
+                initInput();
+                //initTestInput();
+                initHidden();
+                //initTestHidden();
+                forward();
+                boolean isDeltaZero = calculateDelta();
+                if (!isDeltaZero) {
+                    amountErrors++;
+                    backward();
+                }
+                currentDataSet++;
+                for(int k = 1; k<input.length;k++){
+                    input[k].setIn(0);
+                }
+                for(int k = 1; k<hidden.length;k++){
+                    hidden[k].setIn(0);
+                }
+                output.setIn(0);
+            }
+            if (amountErrors == 0) {
+                System.out.println("Dataset complete. Predicted without error.");
+                break;
+            } else {
+                System.out.println(amountErrors + " errors in predicting datasets.");
+            }
+        }
+    }
+
+    private static boolean calculateDelta() {
+        int actual = (int)data[currentDataSet][2];
+        int expected = output.checkExpectation();
+        boolean isDeltaZero = output.calculateDelta(actual,expected) == 0;
+        return isDeltaZero;
+    }
+
+    private static void TestDataSets() {
+        for(int i = 0; i<NUMBER_DATA_SETS;i++){
+            System.out.println("DataSet Number " + i + " : ");
+            System.out.print(data[i][0] + ", ");
+            System.out.print(data[i][1] + ", ");
+            System.out.print(data[i][2] + ", " + "\n");
+        }
+    }
+
+    private static void initDataSets() {
+        for(int i = 0; i<NUMBER_DATA_SETS;i++){
+            for(int j = 0; j<NUMBER_PARAMETERS;j++){
+                data[i][j] = Math.random();
+            }
+        }
+        for(int i = 0; i<NUMBER_DATA_SETS;i++){
+            data[i][2] = Math.round(Math.random());
+        }
+    }
+
+    private static void backward() {
+        output.calculateDeltaTotal();
+        setNewHiddenWeights();
+        calculateDeltaHidden();
+        setNewInputWeights();
+    }
+
+    private static void setNewInputWeights() {
+        for(int i = 0; i< input.length; i++){
+            Inputneuron current = input[i];
+            for(int j =0; j<input[i].getAmountWeights(); j++){
+                double currentWeight = current.getWeight(j);
+                double currentOut = current.calculateOut();
+                input[i].setWeight(currentWeight + alpha * currentOut * hidden[j].getDeltaHidden(),j);
+            }
+        }
+    }
+
+    private static void calculateDeltaHidden() {
+        double result = 0;
+
+        for (int i = 0; i < hidden.length; i++){
+            result += hidden[i].getWeight() * output.getDeltaTotal();
+            result *= Hiddenneuron.sigDerivative(hidden[i].getIn());
+            hidden[i].setDeltaHidden(result);
+        }
+    }
+
+    private static void setNewHiddenWeights() {
+        for(int i = 0; i< HIDDEN_AMOUNT;i++){
+            Hiddenneuron current = hidden[i];
+            double weight = current.getWeight();
+            double result = alpha * current.getOut() * output.getDeltaTotal();
+            double deltaHidden = weight + result;
+            hidden[i].setWeight(deltaHidden);
+        }
     }
 
     private static void testOutput() {

@@ -6,6 +6,7 @@ public class Hiddenneuron {
     private double in;
     private double out;
     private double weight;
+    private double deltaHidden;
     private boolean isBias = false;
 
     public Hiddenneuron(){
@@ -44,8 +45,19 @@ public class Hiddenneuron {
     public double getOut(){
         return out;
     }
-    private double sig(double d){
+    public static double sig(double d){
         double sigmoid = 1/(1+Math.pow (Math.E,-d) );
         return sigmoid;
     }
+    public static double sigDerivative(double d){
+        double result = sig(d) * (1 - sig(d));
+        return result;
+    }
+    public void setDeltaHidden(double deltaHidden){
+        this.deltaHidden = deltaHidden;
+    }
+    public double getDeltaHidden(){
+        return deltaHidden;
+    }
+
 }

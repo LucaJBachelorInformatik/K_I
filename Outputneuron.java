@@ -6,15 +6,16 @@ public class Outputneuron {
     private double in;
     private double out;
     private int delta;
+    private double deltaTotal;
 
 
     public int calculateDelta(int actual, int expected){
         delta = actual - expected;
         return delta;
     }
-    public double calculateDeltaTotal(){
+    public void calculateDeltaTotal(){
         double result = sigDerivative(in) * (delta-out);
-        return result;
+        deltaTotal = result;
     }
     public double getIn(){
         return in;
@@ -40,5 +41,19 @@ public class Outputneuron {
 
     public double getOut(){
         return out;
+    }
+
+    public int checkExpectation(){
+        if(getOut() >= 0.5) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+    public double getDeltaTotal(){
+        return deltaTotal;
+    }
+    public void setIn(double d){
+        in = d;
     }
 }
