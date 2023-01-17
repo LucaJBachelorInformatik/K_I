@@ -1,15 +1,19 @@
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
+
 public class Main {
 
-    private static final int HIDDEN_AMOUNT = 10;
+    private static final int HIDDEN_AMOUNT = 3;
     private static Inputneuron[] input = new Inputneuron[3];
     private static Hiddenneuron[] hidden = new Hiddenneuron[HIDDEN_AMOUNT];
     private static Outputneuron output = new Outputneuron();
-    private static final int NUMBER_DATA_SETS = 5;
+    private static final int NUMBER_DATA_SETS = 12;
     private static final int NUMBER_PARAMETERS = 2;
     private static double[][] data = new double[NUMBER_DATA_SETS][NUMBER_PARAMETERS+1];
     private static final int EPOCH = 200;
     private static int currentDataSet;
-    private static double alpha = 0.01;
+    private static double alpha = 0.05;
     private static int amountErrors;
 
     public static void main(String[] args){
@@ -64,23 +68,30 @@ public class Main {
     }
 
     private static void initDataSets() {
-        for(int i = 0; i<NUMBER_DATA_SETS;i++){
-            for(int j = 0; j<NUMBER_PARAMETERS;j++){
-                data[i][j] = Math.random();
+        int i = 0;
+        try {
+            Scanner scanner = new Scanner(new File("src/wetter.txt"));
+            while (scanner.hasNext()) {
+                double x1 = Double.valueOf(scanner.next());
+                double x2 = Double.valueOf(scanner.next());
+                int y = Integer.valueOf(scanner.next());
+                data[i][0] = x1;
+                data[i][1] = x2;
+                data[i][2] = y;
+                i++;
             }
-        }
-        for(int i = 0; i<NUMBER_DATA_SETS;i++){
-            data[i][2] = Math.round(Math.random());
+
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    private static void backward() {
+    private static void backward () {
         output.calculateDeltaTotal();
         setNewHiddenWeights();
         calculateDeltaHidden();
         setNewInputWeights();
     }
-
     private static void setNewInputWeights() {
         for(int i = 0; i< input.length; i++){
             Inputneuron current = input[i];
