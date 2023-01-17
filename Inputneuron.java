@@ -17,7 +17,7 @@ public class Inputneuron {
             weight[i] = Double.parseDouble(df.format(Math.random()));
         }
     }
-    public void setWeights(double d, int weightIndex){
+    public void setWeight(double d, int weightIndex){
         weight[weightIndex] = Double.parseDouble(df.format(d));
     }
 

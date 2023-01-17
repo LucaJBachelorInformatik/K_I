@@ -37,4 +37,8 @@ public class Outputneuron {
         double result = sig(d) * (1 - sig(d));
         return result;
     }
+
+    public double getOut(){
+        return out;
+    }
 }

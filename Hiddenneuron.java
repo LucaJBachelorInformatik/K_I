@@ -6,6 +6,7 @@ public class Hiddenneuron {
     private double in;
     private double out;
     private double weight;
+    private boolean isBias = false;
 
     public Hiddenneuron(){
         in = 0;
@@ -16,6 +17,9 @@ public class Hiddenneuron {
     }
     public void setIn(double d){
         in = d;
+    }
+    public void setAsBias(){
+        isBias = true;
     }
     public void initializeWeights(){
         weight = Double.parseDouble(df.format(Math.random()));
@@ -30,7 +34,12 @@ public class Hiddenneuron {
         in += d;
     }
     public void calculateOut(){
-        out = sig(in);
+        if(isBias){
+            out = 1;
+        } else {
+            out = sig(in);
+        }
+
     }
     public double getOut(){
         return out;
