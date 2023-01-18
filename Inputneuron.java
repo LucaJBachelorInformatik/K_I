@@ -14,8 +14,13 @@ public class Inputneuron {
     }
 
     public void initializeWeights(){
+        double formattedRandom = Double.parseDouble(df.format(Math.random()));
         for(int i = 0; i<weight.length;i++){
-            weight[i] = Double.parseDouble(df.format(Math.random()));
+            if(Math.random() >= 0.5){
+                weight[i] = formattedRandom;
+            } else {
+                weight[i] = formattedRandom*-1;
+            }
         }
     }
     public void setWeight(double d, int weightIndex){
@@ -30,7 +35,7 @@ public class Inputneuron {
     }
     public void setHiddenAmount(int amount){
         // Anzahl der Gewichte immer gleich Anzahl Hidden Neuronen - 1!
-        weight = new double[amount-1];
+        weight = new double[amount];
     }
     public double getIn(){
         return in;
@@ -47,6 +52,9 @@ public class Inputneuron {
     public double calculateOut(){
         out = Hiddenneuron.sig(in);
         return out;
+    }
+    public double[] getAllWeights(){
+        return weight;
     }
 
 }

@@ -8,7 +8,6 @@ public class Outputneuron {
     private int delta;
     private double deltaTotal;
 
-
     public int calculateDelta(int actual, int expected){
         delta = actual - expected;
         return delta;
@@ -24,21 +23,18 @@ public class Outputneuron {
     public void addIn(double d) {
         in += d;
     }
-
-    public void calculateOut(){
+    public double calculateOut(){
         out = sig(in);
+        return out;
     }
-
     private double sig(double d){
         double sigmoid = 1/(1+Math.pow (Math.E,-d) );
         return sigmoid;
     }
-
     private double sigDerivative(double d){
         double result = sig(d) * (1 - sig(d));
         return result;
     }
-
     public double getOut(){
         return out;
     }

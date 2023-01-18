@@ -3,14 +3,13 @@ import java.text.DecimalFormat;
 public class Hiddenneuron {
 
     private static final DecimalFormat df = new DecimalFormat("#.00");
-    private double in;
+    private double in = 0;
     private double out;
     private double weight;
     private double deltaHidden;
     private boolean isBias = false;
 
     public Hiddenneuron(){
-        in = 0;
         initializeWeights();
     }
     public double getIn(){
@@ -21,9 +20,15 @@ public class Hiddenneuron {
     }
     public void setAsBias(){
         isBias = true;
+        in = 1;
     }
     public void initializeWeights(){
-        weight = Double.parseDouble(df.format(Math.random()));
+        double formattedRandom = Double.parseDouble(df.format(Math.random()));
+        if(Math.random() >= 0.5){
+            weight = formattedRandom;
+        } else {
+            weight = formattedRandom*-1;
+        }
     }
     public void setWeight(double d){
         weight= Double.parseDouble(df.format(d));
@@ -34,13 +39,10 @@ public class Hiddenneuron {
     public void addIn(double d) {
         in += d;
     }
-    public void calculateOut(){
-        if(isBias){
-            out = 1;
-        } else {
-            out = sig(in);
-        }
+    public double calculateOut(){
 
+        out = sig(in);
+        return out;
     }
     public double getOut(){
         return out;
