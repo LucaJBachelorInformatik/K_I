@@ -54,7 +54,7 @@ public class Main {
     private static void initInput() {
         for(int i = 1; i<input.length; i++){
             input[i] = new Inputneuron(HIDDEN_AMOUNT);
-            inputIns[i] = data[currentDataSet][i-1];
+            inputIns[i] = data[dataSetPattern[currentDataSet]][i-1];
             input[i].setIn(inputIns[i]);
         }
         // Bias
@@ -128,7 +128,7 @@ public class Main {
 
     private static void readInput() {
         for(int i = 1; i < input.length;i++){
-            inputIns[i] = data[currentDataSet][i-1];
+            inputIns[i] = data[dataSetPattern[currentDataSet]][i-1];
             input[i].setIn(inputIns[i]);
         }
     }
@@ -188,7 +188,7 @@ public class Main {
     }
 
     private static boolean calculateDelta() {
-        int actual = (int)data[currentDataSet][2];
+        int actual = (int)data[dataSetPattern[currentDataSet]][2];
         boolean isDeltaZero = output.calculateDelta(actual) == 0;
         return isDeltaZero;
     }
