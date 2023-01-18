@@ -8,7 +8,8 @@ public class Outputneuron {
     private int delta;
     private double deltaTotal;
 
-    public int calculateDelta(int actual, int expected){
+    public int calculateDelta(int actual){
+        int expected = checkExpectation(getOut());
         delta = actual - expected;
         return delta;
     }
@@ -36,11 +37,11 @@ public class Outputneuron {
         return result;
     }
     public double getOut(){
-        return out;
+        return sig(in);
     }
 
-    public int checkExpectation(){
-        if(getOut() >= 0.5) {
+    public int checkExpectation(double d){
+        if(d >= 0.5) {
             return 1;
         } else {
             return 0;

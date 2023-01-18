@@ -14,8 +14,9 @@ public class Inputneuron {
     }
 
     public void initializeWeights(){
-        double formattedRandom = Double.parseDouble(df.format(Math.random()));
+        double formattedRandom;
         for(int i = 0; i<weight.length;i++){
+            formattedRandom = Double.parseDouble(df.format(Math.random()));
             if(Math.random() >= 0.5){
                 weight[i] = formattedRandom;
             } else {

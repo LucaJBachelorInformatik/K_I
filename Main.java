@@ -4,34 +4,33 @@ import java.util.Scanner;
 
 public class Main {
 
+    private static int[] dataSetPattern;
+    private static int patternIndex = 0;
     private static final int HIDDEN_AMOUNT = 2;
-    private static Inputneuron[] input = new Inputneuron[3];
-    private static Hiddenneuron[] hidden = new Hiddenneuron[HIDDEN_AMOUNT+1];
-    private static Outputneuron output = new Outputneuron();
+    private static final Inputneuron[] input = new Inputneuron[3];
+    private static final Hiddenneuron[] hidden = new Hiddenneuron[HIDDEN_AMOUNT+1];
+    private static final Outputneuron output = new Outputneuron();
 
-    private static final int NUMBER_DATA_SETS = 10;
+    private static final int NUMBER_DATA_SETS = 12;
     private static final int NUMBER_PARAMETERS = 2;
-    private static double[][] data = new double[NUMBER_DATA_SETS][NUMBER_PARAMETERS+1];
-    private static final int EPOCH = 100;
+    private static final double[][]  data = new double[NUMBER_DATA_SETS][NUMBER_PARAMETERS+1];
+    private static final int EPOCH = 200;
 
     private static int currentDataSet;
-    private static double alpha = 0.03;
+    private static final double  alpha = 0.05;
 
-    private static int amountErrors;
+    private static double[] hiddenIns;
+    private static double[] hiddenOuts;
 
-    private static double hiddenIns[];
-    private static double hiddenOuts[];
-
-    private static double inputIns[];
-    private static double inputOuts[];
+    private static double[] inputIns;
 
     private static double outputIn = 0;
     private static double outputOut = 0;
 
     private static void initDataSets() {
         inputIns = new double[input.length];
-        for(double d:inputIns){
-            d = 0;
+        for(int i = 0; i<inputIns.length;i++){
+            inputIns[i] = 0;
         }
         int i = 0;
         try {
@@ -45,6 +44,7 @@ public class Main {
                 data[i][2] = y;
                 i++;
             }
+            dataSetPattern = new int[i];
 
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
@@ -54,10 +54,12 @@ public class Main {
     private static void initInput() {
         for(int i = 1; i<input.length; i++){
             input[i] = new Inputneuron(HIDDEN_AMOUNT);
-            input[i].setIn(data[currentDataSet][i-1]);
+            inputIns[i] = data[currentDataSet][i-1];
+            input[i].setIn(inputIns[i]);
         }
         // Bias
         input[0] = new Inputneuron(HIDDEN_AMOUNT);
+        inputIns[0] = 1;
         input[0].setIn(1);
     }
 
@@ -69,37 +71,52 @@ public class Main {
         hidden[0].setAsBias();
     }
 
+    private static void initRandomDatasetPattern(){
+        for(int i=0;i<dataSetPattern.length;i++) {
+            int j = (int)(dataSetPattern.length*Math.random());
+            int a = dataSetPattern[i];
+            int b = dataSetPattern[j];
+            dataSetPattern[i] = b;
+            dataSetPattern[j] = a;
+        }
+    }
+
     public static void main(String[] args){
 
         initDataSets();
-        logDataValues();
+        //logDataValues();
         initInput();
         initHidden();
+        //printOutWeights();
 
         for(int i = 0; i<EPOCH;i++) {
+            initRandomDatasetPattern();
             currentDataSet = 0;
-            amountErrors = 0;
+            int amountErrors = 0;
 
-            //TestDataSets();
             //initTestInput();
             //initTestHidden();
             //printOutWeights();
 
             for (int j = 0; j < NUMBER_DATA_SETS; j++) {
+
                 resetIns();
                 readInput();
                 forward();
+                //printOutWeights();
+
                 boolean isDeltaZero = calculateDelta();
                 if (!isDeltaZero) {
                     amountErrors++;
                     backward();
                 }
-                currentDataSet++;
                 //logInputValues();
+                currentDataSet++;
             }
             System.out.println("Amount of wrong Data Sets this epoch: " + amountErrors);
-            //printOutsIns();
         }
+        //checkIfValuesCorrect();
+        //printOutWeights();
     }
 
     private static void resetIns() {
@@ -130,6 +147,7 @@ public class Main {
             hiddenIns[i] = 0;
         }
         hiddenIns[0] = 1;
+        hidden[0].setIn(1);
         for(int i = 1; i<hidden.length;i++){
             // Hiddenlength = 3: Führt 1, 2 aus
             for(int j = 0; j<input.length;j++) {
@@ -158,9 +176,6 @@ public class Main {
     private static double calculateOutputIn() {
         outputIn = 0;
         for(int i = 0; i< hidden.length;i++){
-//            System.out.println("Hidden " + i + " In: " + hidden[i].getIn());
-//            System.out.println("Hidden " + i + " Out: " + hidden[i].getOut());
-//            System.out.println("Hidden " + i + " Weight: " + hidden[i].getWeight());
             outputIn += hidden[i].getOut() * hidden[i].getWeight();
         }
         output.setIn(outputIn);
@@ -174,26 +189,16 @@ public class Main {
 
     private static boolean calculateDelta() {
         int actual = (int)data[currentDataSet][2];
-        int expected = output.checkExpectation();
-        boolean isDeltaZero = output.calculateDelta(actual,expected) == 0;
+        boolean isDeltaZero = output.calculateDelta(actual) == 0;
         return isDeltaZero;
     }
+
     private static void backward () {
         output.calculateDeltaTotal();
         setNewHiddenWeights();
-        calculateDeltaHidden();
-        setNewInputWeights();
+        //calculateDeltaHidden();
+        //setNewInputWeights();
     }
-
-    private static void TestDataSets() {
-        for(int i = 0; i<NUMBER_DATA_SETS;i++){
-            System.out.println("DataSet Number " + i + " : ");
-            System.out.print(data[i][0] + ", ");
-            System.out.print(data[i][1] + ", ");
-            System.out.print(data[i][2] + ", " + "\n");
-        }
-    }
-
 
     private static void setNewInputWeights() {
         for(int i = 0; i< input.length; i++){
@@ -217,7 +222,7 @@ public class Main {
     }
 
     private static void setNewHiddenWeights() {
-        for(int i = 0; i< HIDDEN_AMOUNT;i++){
+        for(int i = 0; i< HIDDEN_AMOUNT+1;i++){
             Hiddenneuron current = hidden[i];
             double weight = current.getWeight();
             double result = alpha * current.getOut() * output.getDeltaTotal();
@@ -226,13 +231,20 @@ public class Main {
         }
     }
 
+    // Ab hier Testmethoden zum Debuggen!
     private static void printOutWeights() {
         for(int i = 0; i<input.length;i++){
-            System.out.println("Input " + i + " Gewichte: ");
+            System.out.print("\nInput " + i + " Gewichte: ");
             for(int j = 0; j<input[i].getAmountWeights();j++) {
                 System.out.print(input[i].getWeight(j) + ", ");
             }
         }
+        System.out.println();
+        for(int i = 0; i<hidden.length;i++){
+            System.out.print("\nHidden "+ i + " Gewichte: ");
+            System.out.print(hidden[i].getWeight() + " ");
+        }
+        System.out.println();
     }
 
     private static void testOutput() {
@@ -276,7 +288,6 @@ public class Main {
 
         input[2].setWeight(0.3,0);
         input[2].setWeight(0.7,1);
-
     }
 
     private static void printOutsIns() {
@@ -309,6 +320,22 @@ public class Main {
                 System.out.print(data[row][col] + " ");
             }
             System.out.println("\n");
+        }
+    }
+    private static void checkIfValuesCorrect() {
+        for(int i = 0; i<input.length;i++){
+            if (input[i].getIn() != inputIns[i]){
+                System.out.println("Values not correct: input at index " + i + "'s 'in' Value does not match inputIns at index " + i);
+
+            }
+            if(hidden[i].getIn() != hiddenIns[i])
+            {
+                System.out.println("Values not correct: hidden at index " + i + "'s 'in' Value does not match hiddenIns at index " + i);
+            }
+            if(hidden[i].getOut() != hiddenOuts[i])
+            {
+                System.out.println("Values not correct: hidden at index " + i + "'s 'out' Value does not match hiddenOut at index " + i);
+            }
         }
     }
 }
