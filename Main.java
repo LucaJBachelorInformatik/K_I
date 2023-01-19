@@ -7,13 +7,13 @@ import java.util.Scanner;
 
 public class Main {
 
-    private static final int NUMBER_RANDOMLY_GENERATED_LINES = 20;
+    private static final int NUMBER_RANDOMLY_GENERATED_LINES = 5;
     private static final int NUMBER_PARAMETERS = 2;
-    private static final int HIDDEN_AMOUNT = 5;
+    private static final int HIDDEN_AMOUNT = 2;
     private static final Inputneuron[] input = new Inputneuron[3];
     private static final Hiddenneuron[] hidden = new Hiddenneuron[HIDDEN_AMOUNT+1];
     private static final Outputneuron output = new Outputneuron();
-    private static final int EPOCH = 200;
+    private static final int EPOCH = 2000;
 
     private static final double alphaAdjustmentRate = 0.95;
     private static int[] dataSetPattern;
@@ -23,7 +23,7 @@ public class Main {
     private static double[][]  data;
 
     private static int currentDataSet;
-    private static double  alpha = 0.05;
+    private static double  alpha = 0.1;
     private static double alphaForInput = alpha * 5;
 
     // Daten zum debuggen damit man das Array im Debugger besser anschauen kann
@@ -150,7 +150,6 @@ public class Main {
                         alphaForInput = initialAlphaValue*5;
                     }
                 }
-                System.out.println(alpha);
                 amountPreviousErrors = amountErrors;
 //                printOutWeights();
 //                printOutsIns();
