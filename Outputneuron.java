@@ -13,9 +13,10 @@ public class Outputneuron {
         delta = actual - expected;
         return delta;
     }
-    public void calculateDeltaTotal(){
+    public double calculateDeltaTotal(){
         double result = sigDerivative(in) * (delta-out);
         deltaTotal = result;
+        return deltaTotal;
     }
     public double getIn(){
         return in;

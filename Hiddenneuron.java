@@ -61,5 +61,4 @@ public class Hiddenneuron {
     public double getDeltaHidden(){
         return deltaHidden;
     }
-
 }

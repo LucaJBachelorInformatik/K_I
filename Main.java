@@ -1,9 +1,16 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Scanner;
 
 public class Main {
 
+    private static final int NUMBER_RANDOMLY_GENERATED_LINES = 20;
+    private static final int NUMBER_PARAMETERS = 2;
+    private static double alphaAdjustmentRate = 0.95;
+    private static int patterIndex = 0;
     private static int[] dataSetPattern;
     private static int patternIndex = 0;
     private static final int HIDDEN_AMOUNT = 2;
@@ -11,22 +18,27 @@ public class Main {
     private static final Hiddenneuron[] hidden = new Hiddenneuron[HIDDEN_AMOUNT+1];
     private static final Outputneuron output = new Outputneuron();
 
-    private static final int NUMBER_DATA_SETS = 12;
-    private static final int NUMBER_PARAMETERS = 2;
-    private static final double[][]  data = new double[NUMBER_DATA_SETS][NUMBER_PARAMETERS+1];
-    private static final int EPOCH = 200;
+
+    private static int lineCount;
+
+    private static double[][]  data;
+    private static final int EPOCH = 2000;
 
     private static int currentDataSet;
-    private static final double  alpha = 0.05;
+    private static double  alpha = 0.5;
+    private static double alphaForInput = alpha * 5;
 
+    // Daten zum debuggen damit man das Array im Debugger besser anschauen kann
     private static double[] hiddenIns;
     private static double[] hiddenOuts;
 
     private static double[] inputIns;
 
     private static double outputIn = 0;
-    private static double outputOut = 0;
 
+    private static void createRandomData() throws IOException {
+        CreateRandomData.fillFileWithInput("wetterRandom.txt",NUMBER_RANDOMLY_GENERATED_LINES);
+    }
     private static void initDataSets() {
         inputIns = new double[input.length];
         for(int i = 0; i<inputIns.length;i++){
@@ -34,19 +46,27 @@ public class Main {
         }
         int i = 0;
         try {
-            Scanner scanner = new Scanner(new File("src/wetter.txt"));
-            while (scanner.hasNext() && i < NUMBER_DATA_SETS) {
+            String fileName = "wetterRandom.txt";
+            File myFile = new File(fileName);
+            lineCount = (int)Files.lines(Paths.get(fileName)).count();
+            data = new double[lineCount][NUMBER_PARAMETERS+1];
+            Scanner scanner = new Scanner(myFile);
+            while (scanner.hasNext() && i < lineCount) {
                 double x1 = Double.valueOf(scanner.next());
                 double x2 = Double.valueOf(scanner.next());
-                int y = Integer.valueOf(scanner.next());
+                double y = Double.valueOf(scanner.next());
                 data[i][0] = x1;
                 data[i][1] = x2;
                 data[i][2] = y;
                 i++;
             }
             dataSetPattern = new int[i];
-
+            for(int k = 0; k< dataSetPattern.length;k++){
+                dataSetPattern[k] = k;
+            }
         } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -73,7 +93,8 @@ public class Main {
 
     private static void initRandomDatasetPattern(){
         for(int i=0;i<dataSetPattern.length;i++) {
-            int j = (int)(dataSetPattern.length*Math.random());
+            double helperVariable = dataSetPattern.length*Math.random();
+            int j = (int)helperVariable;
             int a = dataSetPattern[i];
             int b = dataSetPattern[j];
             dataSetPattern[i] = b;
@@ -82,41 +103,68 @@ public class Main {
     }
 
     public static void main(String[] args){
-
+        try {
+            createRandomData();
+        } catch (IOException e){
+            System.out.println("An error occured");
+        }
+        // In initDataSets() einstellen, ob man wetterRandom.txt oder wetter.txt lesen will
+        // wetterRandom wird jedes mal neu erzeugt
         initDataSets();
-        //logDataValues();
+//        logDataValues();
         initInput();
         initHidden();
-        //printOutWeights();
-
+//        printOutWeights();
+        int amountErrors = 0;
+        int amountPreviousErrors = 0;
         for(int i = 0; i<EPOCH;i++) {
+            patternIndex = 0;
             initRandomDatasetPattern();
-            currentDataSet = 0;
-            int amountErrors = 0;
+            currentDataSet = dataSetPattern[patternIndex];
+            amountErrors = 0;
 
             //initTestInput();
             //initTestHidden();
-            //printOutWeights();
+//            printOutWeights();
 
-            for (int j = 0; j < NUMBER_DATA_SETS; j++) {
-
+            for (int j = 0; j < lineCount; j++) {
+                currentDataSet = dataSetPattern[patternIndex];
                 resetIns();
                 readInput();
                 forward();
-                //printOutWeights();
+//                printOutsIns();
+//                printOutWeights();
 
                 boolean isDeltaZero = calculateDelta();
                 if (!isDeltaZero) {
                     amountErrors++;
                     backward();
                 }
+                patternIndex++;
                 //logInputValues();
-                currentDataSet++;
+//                printOutsIns();
             }
-            System.out.println("Amount of wrong Data Sets this epoch: " + amountErrors);
+            if(amountErrors != 0) {
+                System.out.println("Amount of wrong Data Sets this epoch: " + amountErrors);
+//                printOutWeights();
+//                printOutsIns();
+            } else {
+                System.out.println("No wrong data sets this epoch. Training concluded.");
+//                printOutsIns();
+                break;
+            }
+//            printOutsIns();
+            amountPreviousErrors = amountErrors;
+            if(amountPreviousErrors > amountErrors){
+                alpha *= alphaAdjustmentRate;
+                alphaForInput *= alphaAdjustmentRate;
+            } else if(amountPreviousErrors < amountErrors){
+                alpha *= (1-alphaAdjustmentRate);
+                alpha *= (1-alphaAdjustmentRate);
+            }
         }
         //checkIfValuesCorrect();
-        //printOutWeights();
+//        printOutWeights();
     }
 
     private static void resetIns() {
@@ -128,7 +176,7 @@ public class Main {
 
     private static void readInput() {
         for(int i = 1; i < input.length;i++){
-            inputIns[i] = data[dataSetPattern[currentDataSet]][i-1];
+            inputIns[i] = data[currentDataSet][i-1];
             input[i].setIn(inputIns[i]);
         }
     }
@@ -138,7 +186,7 @@ public class Main {
         hiddenIns  = calculateHiddenIns();
         hiddenOuts = calculateHiddenOuts();
         outputIn = calculateOutputIn();
-        outputOut = calculateOutputOut();
+        calculateOutputOut();
     }
 
     private static double[] calculateHiddenIns() {
@@ -188,50 +236,43 @@ public class Main {
     }
 
     private static boolean calculateDelta() {
-        int actual = (int)data[dataSetPattern[currentDataSet]][2];
+        int actual = (int)data[currentDataSet][2];
         boolean isDeltaZero = output.calculateDelta(actual) == 0;
         return isDeltaZero;
     }
 
     private static void backward () {
-        output.calculateDeltaTotal();
-        setNewHiddenWeights();
-        //calculateDeltaHidden();
-        //setNewInputWeights();
+        output.calculateDelta((int)data[currentDataSet][2]);
+        calculateDeltaHidden();
+        assignNewWeights();
     }
 
-    private static void setNewInputWeights() {
-        for(int i = 0; i< input.length; i++){
+
+    private static void calculateDeltaHidden() {
+        for(int i = 0; i< HIDDEN_AMOUNT+1;i++){
+            Hiddenneuron current = hidden[i];
+            double result = Hiddenneuron.sigDerivative(current.getIn()) * current.getWeight() * output.calculateDeltaTotal();
+            current.setDeltaHidden(result);
+        }
+    }
+
+    private static void assignNewWeights(){
+        for(int i = 0; i<hidden.length;i++){
+            Hiddenneuron current = hidden[i];
+            double result = current.getWeight() + alpha * current.getOut() * output.getDeltaTotal();
+            current.setWeight(result);
+        }
+        for(int i = 0; i<input.length;i++){
             Inputneuron current = input[i];
-            for(int j =0; j<input[i].getAmountWeights(); j++){
-                double currentWeight = current.getWeight(j);
-                double currentOut = current.calculateOut();
-                input[i].setWeight(currentWeight + alpha * currentOut * hidden[j].getDeltaHidden(),j);
+            for(int j = 0; j<input[i].getAmountWeights();j++) {
+                double result = current.getWeight(j) + alphaForInput * current.getIn() * hidden[j].getDeltaHidden();
+                current.setWeight(result,j);
             }
         }
     }
 
-    private static void calculateDeltaHidden() {
-        double result = 0;
-
-        for (int i = 0; i < hidden.length; i++){
-            result += hidden[i].getWeight() * output.getDeltaTotal();
-            result *= Hiddenneuron.sigDerivative(hidden[i].getIn());
-            hidden[i].setDeltaHidden(result);
-        }
-    }
-
-    private static void setNewHiddenWeights() {
-        for(int i = 0; i< HIDDEN_AMOUNT+1;i++){
-            Hiddenneuron current = hidden[i];
-            double weight = current.getWeight();
-            double result = alpha * current.getOut() * output.getDeltaTotal();
-            double deltaHidden = weight + result;
-            hidden[i].setWeight(deltaHidden);
-        }
-    }
-
     // Ab hier Testmethoden zum Debuggen!
+    // ################################################################################################################
     private static void printOutWeights() {
         for(int i = 0; i<input.length;i++){
             System.out.print("\nInput " + i + " Gewichte: ");
@@ -291,19 +332,19 @@ public class Main {
     }
 
     private static void printOutsIns() {
-        System.out.print("Hidden Ins: \n" + hiddenIns[0]);
-        for(int i = 1; i<hiddenIns.length;i++){
-            System.out.print(", " + hiddenIns[i]);
-        }
-        System.out.println();
-
-        System.out.print("Hidden Outs: \n" + hiddenOuts[0]);
-        for(int i = 1; i<hiddenOuts.length;i++){
-            System.out.print(", " +hiddenOuts[i]);
-        }
-        System.out.println();
-        System.out.println("Output In: " + outputIn);
-        System.out.println("Output Out: " + outputOut + "\n");
+//        System.out.print("Hidden Ins: \n" + hiddenIns[0]);
+//        for(int i = 1; i<hiddenIns.length;i++){
+//            System.out.print(", " + hiddenIns[i]);
+//        }
+//        System.out.println();
+//
+//        System.out.print("Hidden Outs: \n" + hiddenOuts[0]);
+//        for(int i = 1; i<hiddenOuts.length;i++){
+//            System.out.print(", " +hiddenOuts[i]);
+//        }
+//        System.out.println();
+        System.out.println("Output In: " + output.getIn());
+        System.out.println("Output Out: " + output.getOut() + "\n");
     }
 
     private static void logInputValues() {
