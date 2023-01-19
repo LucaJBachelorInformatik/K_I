@@ -1,31 +1,29 @@
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Main {
 
     private static final int NUMBER_RANDOMLY_GENERATED_LINES = 20;
     private static final int NUMBER_PARAMETERS = 2;
-    private static double alphaAdjustmentRate = 0.95;
-    private static int patterIndex = 0;
-    private static int[] dataSetPattern;
-    private static int patternIndex = 0;
-    private static final int HIDDEN_AMOUNT = 2;
+    private static final int HIDDEN_AMOUNT = 5;
     private static final Inputneuron[] input = new Inputneuron[3];
     private static final Hiddenneuron[] hidden = new Hiddenneuron[HIDDEN_AMOUNT+1];
     private static final Outputneuron output = new Outputneuron();
+    private static final int EPOCH = 200;
 
+    private static final double alphaAdjustmentRate = 0.95;
+    private static int[] dataSetPattern;
 
     private static int lineCount;
 
     private static double[][]  data;
-    private static final int EPOCH = 2000;
 
     private static int currentDataSet;
-    private static double  alpha = 0.5;
+    private static double  alpha = 0.05;
     private static double alphaForInput = alpha * 5;
 
     // Daten zum debuggen damit man das Array im Debugger besser anschauen kann
@@ -35,15 +33,14 @@ public class Main {
     private static double[] inputIns;
 
     private static double outputIn = 0;
+    private static final double initialAlphaValue = alpha;
 
     private static void createRandomData() throws IOException {
         CreateRandomData.fillFileWithInput("wetterRandom.txt",NUMBER_RANDOMLY_GENERATED_LINES);
     }
     private static void initDataSets() {
         inputIns = new double[input.length];
-        for(int i = 0; i<inputIns.length;i++){
-            inputIns[i] = 0;
-        }
+        Arrays.fill(inputIns, 0);
         int i = 0;
         try {
             String fileName = "wetterRandom.txt";
@@ -52,9 +49,9 @@ public class Main {
             data = new double[lineCount][NUMBER_PARAMETERS+1];
             Scanner scanner = new Scanner(myFile);
             while (scanner.hasNext() && i < lineCount) {
-                double x1 = Double.valueOf(scanner.next());
-                double x2 = Double.valueOf(scanner.next());
-                double y = Double.valueOf(scanner.next());
+                double x1 = Double.parseDouble(scanner.next());
+                double x2 = Double.parseDouble(scanner.next());
+                double y = Double.parseDouble(scanner.next());
                 data[i][0] = x1;
                 data[i][1] = x2;
                 data[i][2] = y;
@@ -64,8 +61,6 @@ public class Main {
             for(int k = 0; k< dataSetPattern.length;k++){
                 dataSetPattern[k] = k;
             }
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -115,10 +110,10 @@ public class Main {
         initInput();
         initHidden();
 //        printOutWeights();
-        int amountErrors = 0;
+        int amountErrors;
         int amountPreviousErrors = 0;
         for(int i = 0; i<EPOCH;i++) {
-            patternIndex = 0;
+            int patternIndex = 0;
             initRandomDatasetPattern();
             currentDataSet = dataSetPattern[patternIndex];
             amountErrors = 0;
@@ -146,6 +141,17 @@ public class Main {
             }
             if(amountErrors != 0) {
                 System.out.println("Amount of wrong Data Sets this epoch: " + amountErrors);
+                if(amountPreviousErrors != 0){
+                    if(amountPreviousErrors > amountErrors){
+                        alpha *= alphaAdjustmentRate;
+                        alphaForInput *= alphaAdjustmentRate;
+                    } else if(amountPreviousErrors < amountErrors){
+                        alpha = initialAlphaValue;
+                        alphaForInput = initialAlphaValue*5;
+                    }
+                }
+                System.out.println(alpha);
+                amountPreviousErrors = amountErrors;
 //                printOutWeights();
 //                printOutsIns();
             } else {
@@ -154,14 +160,6 @@ public class Main {
                 break;
             }
 //            printOutsIns();
-            amountPreviousErrors = amountErrors;
-            if(amountPreviousErrors > amountErrors){
-                alpha *= alphaAdjustmentRate;
-                alphaForInput *= alphaAdjustmentRate;
-            } else if(amountPreviousErrors < amountErrors){
-                alpha *= (1-alphaAdjustmentRate);
-                alpha *= (1-alphaAdjustmentRate);
-            }
         }
         //checkIfValuesCorrect();
 //        printOutWeights();
