@@ -7,15 +7,27 @@ import java.util.Scanner;
 
 public class Main {
 
-    private static final int NUMBER_RANDOMLY_GENERATED_LINES = 5;
+     /*Wenn man wetterRandom.txt benutzen will kann man diese Variable ändern
+     Beim experimentieren hat die KI höchstens 12 Data Sets hingekriegt (Epochen = 200 000 für 12)
+     Für Datasets > 5 fühlt sich die KI nicht sehr intelligent an.... manchmal ist in der vorletzten Epoche noch
+     Mehr als die Hälfte falsch und in der letzten Epoche gibts dann keine Fehler mehr...
+     Und die KI ist ab 10 Sets nicht mehr immer in der Lage immer alles korrekt zu klassifizieren, sondern nur manchmal
+     */
+    private static final int NUMBER_RANDOMLY_GENERATED_LINES = 7;
+    // Sollte immer 2 bleiben für dieses Projekt
     private static final int NUMBER_PARAMETERS = 2;
-    private static final int HIDDEN_AMOUNT = 2;
+    // Kann man anpassen, ich finde 5 funktioniert am besten für die meisten Fälle
+    private static final int HIDDEN_AMOUNT = 5;
+
     private static final Inputneuron[] input = new Inputneuron[3];
     private static final Hiddenneuron[] hidden = new Hiddenneuron[HIDDEN_AMOUNT+1];
     private static final Outputneuron output = new Outputneuron();
-    private static final int EPOCH = 2000;
-
+    // Die Ki braucht verdammt viele Epochen (>2000 bei 5 Data Sets)
+    private static final int EPOCH = 100_000;
+    // Alpha wird bei konsekutiven Epochen wo jeweils die spätere weniger Fehler hat reduziert
+    // in dem man alpha mit diesem Wert multipliziert
     private static final double alphaAdjustmentRate = 0.95;
+
     private static int[] dataSetPattern;
 
     private static int lineCount;
@@ -23,8 +35,10 @@ public class Main {
     private static double[][]  data;
 
     private static int currentDataSet;
-    private static double  alpha = 0.1;
+    private static double  alpha = 0.075;
     private static double alphaForInput = alpha * 5;
+
+    private static double initialAlphaValue = alpha;
 
     // Daten zum debuggen damit man das Array im Debugger besser anschauen kann
     private static double[] hiddenIns;
@@ -33,11 +47,11 @@ public class Main {
     private static double[] inputIns;
 
     private static double outputIn = 0;
-    private static final double initialAlphaValue = alpha;
 
     private static void createRandomData() throws IOException {
         CreateRandomData.fillFileWithInput("wetterRandom.txt",NUMBER_RANDOMLY_GENERATED_LINES);
     }
+
     private static void initDataSets() {
         inputIns = new double[input.length];
         Arrays.fill(inputIns, 0);
@@ -106,38 +120,32 @@ public class Main {
         // In initDataSets() einstellen, ob man wetterRandom.txt oder wetter.txt lesen will
         // wetterRandom wird jedes mal neu erzeugt
         initDataSets();
-//        logDataValues();
         initInput();
         initHidden();
-//        printOutWeights();
         int amountErrors;
         int amountPreviousErrors = 0;
         for(int i = 0; i<EPOCH;i++) {
+            if(i % 100 == 0 && i != 0){
+                initialAlphaValue *= alphaAdjustmentRate;
+            }
             int patternIndex = 0;
             initRandomDatasetPattern();
             currentDataSet = dataSetPattern[patternIndex];
             amountErrors = 0;
-
-            //initTestInput();
-            //initTestHidden();
-//            printOutWeights();
 
             for (int j = 0; j < lineCount; j++) {
                 currentDataSet = dataSetPattern[patternIndex];
                 resetIns();
                 readInput();
                 forward();
-//                printOutsIns();
-//                printOutWeights();
 
                 boolean isDeltaZero = calculateDelta();
                 if (!isDeltaZero) {
                     amountErrors++;
                     backward();
                 }
+
                 patternIndex++;
-                //logInputValues();
-//                printOutsIns();
             }
             if(amountErrors != 0) {
                 System.out.println("Amount of wrong Data Sets this epoch: " + amountErrors);
@@ -148,20 +156,19 @@ public class Main {
                     } else if(amountPreviousErrors < amountErrors){
                         alpha = initialAlphaValue;
                         alphaForInput = initialAlphaValue*5;
+                    } else {
+                        alpha *= (2.0-alphaAdjustmentRate);
+                        alphaForInput = 5 * alpha;
                     }
                 }
                 amountPreviousErrors = amountErrors;
-//                printOutWeights();
-//                printOutsIns();
             } else {
                 System.out.println("No wrong data sets this epoch. Training concluded.");
-//                printOutsIns();
+                System.out.println(1-alpha);
                 break;
             }
-//            printOutsIns();
+            System.out.println(1-alpha);
         }
-        //checkIfValuesCorrect();
-//        printOutWeights();
     }
 
     private static void resetIns() {
@@ -208,9 +215,7 @@ public class Main {
     private static double[] calculateHiddenOuts() {
 
         hiddenOuts = new double[hidden.length];
-        for(int i = 0; i< hiddenOuts.length;i++){
-            hiddenOuts[i] = 0;
-        }
+        Arrays.fill(hiddenOuts, 0);
 
         for(int i = 0; i<hidden.length;i++){
             hiddenOuts[i] = hidden[i].calculateOut();
@@ -227,9 +232,8 @@ public class Main {
         return outputIn;
     }
 
-    private static double calculateOutputOut() {
+    private static void calculateOutputOut() {
         double outputOut = output.calculateOut();
-        return outputOut;
     }
 
     private static boolean calculateDelta() {
